@@ -7,6 +7,9 @@ mod preferences;
 mod search;
 mod users;
 
+#[cfg(test)]
+mod test_utils;
+
 use axum::extract::FromRef;
 use axum::http::Method;
 use axum::{Router, middleware, routing::get};
@@ -122,7 +125,7 @@ async fn main() {
             "/api/preferences",
             get(preferences::get_preferences).put(preferences::update_preferences),
         )
-        .route_layer(middleware::from_fn(auth::auth_middleware));
+        .route_layer(middleware::from_fn_with_state(state.db.clone(), auth::auth_middleware));
 
     let app = Router::new()
         .merge(public)
