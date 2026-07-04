@@ -7,7 +7,7 @@ ENV VITE_API_URL=
 RUN bun run build
 
 FROM rust:1-slim AS backend
-RUN apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y build-essential && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY api/Cargo.toml api/Cargo.lock ./
 RUN mkdir src && echo "fn main() {}" > src/main.rs

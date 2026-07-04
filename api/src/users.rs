@@ -7,12 +7,16 @@ use serde::Deserialize;
 use serde_json::json;
 use sqlx::SqlitePool;
 use time::{Duration, OffsetDateTime};
+use utoipa::{ToSchema, openapi::schema};
 use uuid::Uuid;
 
 use crate::auth;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
+#[schema(example = json!({"password": "new_password"}),
+    description = "Request body for changing the user's password")]
 pub struct AuthBody {
+    #[schema(example = "new_password", value_type = String)]
     pub password: String,
 }
 
@@ -116,6 +120,14 @@ pub async fn signin(
     Ok((jar.add(cookie), Json(json!({ "success": true }))))
 }
 
+#[utoipa::path(
+        put,
+        path = "/api/auth/password",
+        request_body(content = AuthBody, content_type = "application/json"),
+        responses(
+            (status = 200, description = "Password changed successfully", body = schema::Object, example = json!({"success": true})),
+        )
+    )]
 pub async fn change_password(
     state: axum::extract::State<crate::AppState>,
     Json(body): Json<AuthBody>,

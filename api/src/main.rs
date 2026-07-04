@@ -1,3 +1,4 @@
+mod apidoc;
 mod auth;
 mod config;
 mod db;
@@ -10,11 +11,14 @@ mod users;
 #[cfg(test)]
 mod test_utils;
 
+use apidoc::ApiDoc;
 use axum::extract::FromRef;
 use axum::http::Method;
 use axum::{Router, middleware, routing::get};
 use s3::{Auth, Client, Credentials, providers};
 use tower_http::cors::AllowOrigin;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 #[derive(Clone)]
 struct AppState {
@@ -125,13 +129,17 @@ async fn main() {
             "/api/preferences",
             get(preferences::get_preferences).put(preferences::update_preferences),
         )
-        .route_layer(middleware::from_fn_with_state(state.db.clone(), auth::auth_middleware));
+        .route_layer(middleware::from_fn_with_state(
+            state.db.clone(),
+            auth::auth_middleware,
+        ));
 
     let app = Router::new()
         .merge(public)
         .merge(protected)
         .layer(cors)
-        .with_state(state);
+        .with_state(state)
+        .merge(SwaggerUi::new("/swagger-ui/").url("/api-docs/openapi.json", ApiDoc::openapi()));
 
     let addr = format!("{}:{}", config.host, config.port);
     println!("Server running on http://{}", addr);
